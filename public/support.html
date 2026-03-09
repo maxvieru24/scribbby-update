@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Help & Support – Scribbby</title>
+  <meta name="description" content="Got a question? Browse Scribbby's help docs or reach out to the team. We're pretty responsive, promise." />
+  <meta name="robots" content="index, follow" />
+  <link rel="canonical" href="https://scribbby.com/support" />
+  <meta property="og:title" content="Help & Support – Scribbby" />
+  <meta property="og:description" content="Got a question? Browse Scribbby's help docs or reach out to the team." />
+  <meta property="og:url" content="https://scribbby.com/support" />
+  <link rel="stylesheet" href="css/tokens.css">
+  <link rel="stylesheet" href="fonts/fonts.css">
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      background: var(--color-bg);
+      max-width: 28rem;
+      margin: 2rem auto;
+      padding: 0 1rem;
+    }
+    h1 { font-size: 1.35rem; margin-bottom: 1.5rem; }
+    .back { font-size: 0.9rem; margin-bottom: 1.5rem; }
+    .back a { color: var(--color-primary); text-decoration: none; }
+    .back a:hover { text-decoration: underline; }
+    label { display: block; margin-bottom: 0.25rem; font-weight: 500; }
+    input[type="text"],
+    input[type="email"],
+    textarea {
+      width: 100%;
+      padding: 0.5rem 0.75rem;
+      font-size: 1rem;
+      font-family: inherit;
+      border: 1px solid var(--color-border);
+      border-radius: 6px;
+      margin-bottom: 1rem;
+      background: var(--color-white);
+    }
+    textarea {
+      min-height: 8rem;
+      resize: vertical;
+    }
+    button[type="submit"] {
+      width: 100%;
+      padding: 0.5rem 1rem;
+      font-size: 1rem;
+      background: var(--color-dark);
+      color: var(--color-white);
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    button[type="submit"]:hover { opacity: 0.9; }
+    button[type="submit"]:disabled { opacity: 0.6; cursor: not-allowed; }
+    .message { font-size: 0.9rem; margin-top: 0.5rem; }
+    .message.success { color: #0a0; }
+    .message.error { color: #c00; }
+  </style>
+</head>
+<body>
+  <p class="back"><a href="/">← Back</a></p>
+  <h1>Support</h1>
+  <form id="form">
+    <label for="name">Name</label>
+    <input type="text" id="name" name="name" required autocomplete="name" placeholder="Your name">
+    <label for="email">Email</label>
+    <input type="email" id="email" name="email" required autocomplete="email" placeholder="your@email.com">
+    <label for="message">Message</label>
+    <textarea id="message" name="message" required placeholder="How can we help?"></textarea>
+    <button type="submit" id="btn">Submit</button>
+  </form>
+  <div id="feedback" class="message" aria-live="polite"></div>
+
+  <script>
+    const form = document.getElementById('form');
+    const btn = document.getElementById('btn');
+    const feedback = document.getElementById('feedback');
+
+    function showFeedback(text, isError) {
+      feedback.textContent = text || '';
+      feedback.className = 'message' + (text ? (isError ? ' error' : ' success') : '');
+      feedback.style.display = text ? 'block' : 'none';
+    }
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const name = form.name.value.trim();
+      const email = form.email.value.trim();
+      const message = form.message.value.trim();
+      if (!name || !email || !message) return;
+
+      showFeedback('');
+      btn.disabled = true;
+      try {
+        const res = await fetch('/api/support', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name, email, message }),
+        });
+        const data = res.ok ? await res.json().catch(() => ({})) : null;
+        if (res.ok) {
+          showFeedback(data.message || 'Thank you. We\'ll get back to you soon.', false);
+          form.reset();
+        } else {
+          showFeedback(data.error || 'Something went wrong. Please try again.', true);
+        }
+      } catch (err) {
+        showFeedback('Something went wrong. Please try again.', true);
+      } finally {
+        btn.disabled = false;
+      }
+    });
+  </script>
+</body>
+</html>

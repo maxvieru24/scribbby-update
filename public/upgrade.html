@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="css/tokens.css">
+  <link rel="stylesheet" href="fonts/fonts.css">
+  <title>Upgrade — Scribbby</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      background: var(--color-bg);
+      margin: 0;
+      padding: 2rem 1rem 3rem;
+      color: #333;
+    }
+    .container { max-width: 42rem; margin: 0 auto; }
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      padding: 0.35rem 0.75rem;
+      font-size: 0.8rem;
+      color: #666;
+      background: #e8e8e8;
+      border-radius: 999px;
+      margin-bottom: 1.5rem;
+    }
+    .pill svg { width: 1rem; height: 1rem; opacity: 0.8; }
+    h1 {
+      font-size: 1.75rem;
+      font-weight: 700;
+      margin: 0 0 0.5rem;
+      color: #1a1a1a;
+    }
+    .subtitle {
+      font-size: 1rem;
+      color: #666;
+      margin-bottom: 2rem;
+    }
+    .cards {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.25rem;
+      align-items: start;
+    }
+    @media (max-width: 32rem) {
+      .cards { grid-template-columns: 1fr; }
+    }
+    .card {
+      background: #fff;
+      border-radius: 12px;
+      padding: 1.5rem;
+      border: 1px solid #e5e5e5;
+    }
+    .card.pro {
+      border-color: #2563eb;
+      box-shadow: 0 0 0 1px #2563eb;
+    }
+    .card-title {
+      font-size: 1.1rem;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+    }
+    .card-price {
+      font-size: 1.75rem;
+      font-weight: 700;
+      margin-bottom: 1rem;
+    }
+    .card.pro .card-price { color: #1a1a1a; }
+    .tabs {
+      display: flex;
+      gap: 0.25rem;
+      margin-bottom: 1rem;
+    }
+    .tab {
+      flex: 1;
+      padding: 0.4rem 0.5rem;
+      font-size: 0.8rem;
+      border: none;
+      border-radius: 6px;
+      background: #e5e5e5;
+      color: #666;
+      cursor: pointer;
+    }
+    .tab.active {
+      background: #2563eb;
+      color: #fff;
+    }
+    .tab:not(.active):hover { background: #d4d4d4; }
+    .features {
+      list-style: none;
+      padding: 0;
+      margin: 0 0 1.5rem;
+      font-size: 0.9rem;
+      color: #444;
+    }
+    .features li {
+      padding: 0.25rem 0;
+      padding-left: 1.25rem;
+      position: relative;
+    }
+    .features li::before {
+      content: "◆";
+      position: absolute;
+      left: 0;
+      font-size: 0.5rem;
+      top: 0.45rem;
+      color: #333;
+    }
+    .card-cta {
+      display: block;
+      width: 100%;
+      padding: 0.6rem 1rem;
+      font-size: 0.95rem;
+      font-weight: 500;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      text-align: center;
+      text-decoration: none;
+    }
+    .card-cta.muted {
+      background: #e5e5e5;
+      color: #666;
+      cursor: default;
+    }
+    .card-cta.primary {
+      background: #2563eb;
+      color: #fff;
+    }
+    .card-cta.primary:hover { background: #1d4ed8; }
+    .card-cta.primary:disabled { opacity: 0.7; cursor: not-allowed; }
+    .card-cta svg { vertical-align: middle; margin-right: 0.35rem; }
+    .back { font-size: 0.9rem; margin-bottom: 1rem; }
+    .back a { color: #2563eb; text-decoration: none; }
+    .back a:hover { text-decoration: underline; }
+    .message { font-size: 0.9rem; margin-top: 0.75rem; }
+    .message.error { color: #c00; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <p class="back"><a href="/">← Back to app</a></p>
+    <div class="pill" aria-label="Our plans">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+      Our Plans
+    </div>
+    <h1>Upgrade to Pro and never hit a limit</h1>
+    <p class="subtitle">Transcribe as much as you want, whenever you want.</p>
+
+    <div class="cards">
+      <div class="card">
+        <div class="card-title">Scribbby Basic</div>
+        <div class="card-price">Free</div>
+        <ul class="features">
+          <li>3 Transcripts a Day</li>
+          <li>30 Min Video/Audio Limit</li>
+          <li>Lower Priority Queue</li>
+          <li>No Card. No tricks. Literally $0</li>
+        </ul>
+        <button type="button" id="btnBasic" class="card-cta muted" disabled>You're on this plan now</button>
+      </div>
+
+      <div class="card pro">
+        <div class="card-title">Scribbby Pro</div>
+        <div class="tabs" role="tablist">
+          <button type="button" class="tab" id="tabMonthly" role="tab" aria-selected="false">Monthly</button>
+          <button type="button" class="tab active" id="tabAnnual" role="tab" aria-selected="true">Annual -50%</button>
+        </div>
+        <div class="card-price" id="proPrice">$10/mo</div>
+        <ul class="features">
+          <li>Unlimited Transcriptions</li>
+          <li>10 Hour Long Videos/Audios</li>
+          <li>First Priority Queue</li>
+          <li>A Love Letter from Scribbby Team</li>
+        </ul>
+        <button type="button" id="btnPro" class="card-cta primary">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+          Go Unlimited
+        </button>
+        <p id="checkoutMessage" class="message" aria-live="polite"></p>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    const tabMonthly = document.getElementById('tabMonthly');
+    const tabAnnual = document.getElementById('tabAnnual');
+    const proPrice = document.getElementById('proPrice');
+    const btnBasic = document.getElementById('btnBasic');
+    const btnPro = document.getElementById('btnPro');
+    const checkoutMessage = document.getElementById('checkoutMessage');
+
+    let interval = 'year'; // 'month' | 'year'
+    let session = null;
+    let plan = 'free';
+
+    function setPrice() {
+      proPrice.textContent = interval === 'month' ? '$20/mo' : '$10/mo';
+    }
+
+    function setTabs() {
+      tabMonthly.classList.toggle('active', interval === 'month');
+      tabAnnual.classList.toggle('active', interval === 'year');
+      tabMonthly.setAttribute('aria-selected', interval === 'month');
+      tabAnnual.setAttribute('aria-selected', interval === 'year');
+    }
+
+    tabMonthly.addEventListener('click', () => {
+      interval = 'month';
+      setPrice();
+      setTabs();
+    });
+    tabAnnual.addEventListener('click', () => {
+      interval = 'year';
+      setPrice();
+      setTabs();
+    });
+
+    const configRes = await fetch('/api/config');
+    const { supabaseUrl, supabaseAnonKey } = await configRes.json();
+    const { createClient } = await import('https://esm.sh/@supabase/supabase-js@2');
+    const supabase = createClient(supabaseUrl, supabaseAnonKey);
+
+    const { data: { session: s } } = await supabase.auth.getSession();
+    session = s;
+    if (session?.user) {
+      const { data: profile } = await supabase.from('profiles').select('plan').eq('id', session.user.id).single();
+      plan = profile?.plan ?? 'free';
+    }
+
+    if (plan === 'free') {
+      btnBasic.textContent = "You're on this plan now";
+      btnBasic.disabled = true;
+    } else {
+      btnBasic.textContent = 'Current plan';
+      btnBasic.disabled = true;
+    }
+
+    if (plan === 'pro') {
+      btnPro.textContent = 'Manage subscription';
+      btnPro.onclick = async () => {
+        checkoutMessage.textContent = '';
+        btnPro.disabled = true;
+        try {
+          const res = await fetch('/api/billing/portal', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + session.access_token },
+            body: JSON.stringify({}),
+          });
+          const data = await res.json().catch(() => ({}));
+          if (res.ok && data.url) {
+            window.location.href = data.url;
+          } else {
+            checkoutMessage.textContent = data.error || 'Could not open billing.';
+            checkoutMessage.className = 'message error';
+          }
+        } catch (e) {
+          checkoutMessage.textContent = e.message || 'Request failed.';
+          checkoutMessage.className = 'message error';
+        } finally {
+          btnPro.disabled = false;
+        }
+      };
+    } else {
+      btnPro.onclick = async () => {
+        if (!session) {
+          window.location.href = '/login?redirect=' + encodeURIComponent('/upgrade');
+          return;
+        }
+        checkoutMessage.textContent = '';
+        btnPro.disabled = true;
+        try {
+          const res = await fetch('/api/billing/checkout', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + session.access_token },
+            body: JSON.stringify({ interval }),
+          });
+          const data = await res.json().catch(() => ({}));
+          if (res.ok && data.url) {
+            window.location.href = data.url;
+          } else {
+            checkoutMessage.textContent = data.error || 'Could not start checkout.';
+            checkoutMessage.className = 'message error';
+          }
+        } catch (e) {
+          checkoutMessage.textContent = e.message || 'Request failed.';
+          checkoutMessage.className = 'message error';
+        } finally {
+          btnPro.disabled = false;
+        }
+      };
+    }
+
+    setPrice();
+    setTabs();
+  </script>
+</body>
+</html>

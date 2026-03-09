@@ -1,0 +1,104 @@
+/* Scribbby URL-or-upload component – reusable input wrap + toggle + drop area */
+
+.scribbby-url-upload .url-wrap { margin-bottom: 0; }
+
+.scribbby-url-upload .url-input-group {
+  display: flex;
+  align-items: center;
+  height: 60px;
+  overflow: hidden;
+  background: var(--color-white);
+  border: 1px solid var(--color-border-input);
+  border-radius: 20px;
+  padding: 10px 8px 10px 20px;
+}
+
+.scribbby-url-upload .url-input-icon {
+  flex-shrink: 0;
+  width: fit-content;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.scribbby-url-upload .url-input-group input[type="url"] {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  margin: 0;
+  padding: 0 0.75rem;
+  border: none;
+  border-radius: 0;
+  font-family: var(--type-regular-font-family);
+  font-weight: var(--type-regular-font-weight);
+  font-size: var(--type-regular-font-size);
+  line-height: var(--type-regular-line-height);
+  color: var(--color-dark);
+  background: transparent;
+}
+
+.scribbby-url-upload .url-input-group input[type="url"]::placeholder {
+  color: var(--color-dark-50);
+}
+
+.scribbby-url-upload .url-input-group input[type="url"]::-webkit-input-placeholder {
+  color: var(--color-dark-50);
+}
+
+.scribbby-url-upload .url-input-group input[type="url"]:focus {
+  outline: none;
+}
+
+.scribbby-url-upload .url-input-group button {
+  flex-shrink: 0;
+  height: 100%;
+  margin: 0;
+  padding: 0 1.25rem;
+  border: none;
+  border-radius: 10px;
+  font-size: 1rem;
+  background: var(--color-dark);
+  color: var(--color-white);
+  cursor: pointer;
+}
+
+.scribbby-url-upload .url-input-group button:hover { background: #0f1f33; }
+.scribbby-url-upload .url-input-group button:disabled { opacity: 0.6; cursor: not-allowed; }
+
+.scribbby-url-upload .toggle-wrap {
+  margin-top: 0.75rem;
+  text-align: center;
+}
+
+.scribbby-url-upload .toggle-wrap a {
+  font-family: var(--type-small-font-family);
+  font-weight: var(--type-small-font-weight);
+  font-size: var(--type-small-font-size);
+  line-height: var(--type-small-line-height);
+  color: var(--color-dark-50);
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.scribbby-url-upload .toggle-wrap a:hover { text-decoration: underline; }
+
+.scribbby-url-upload .upload-zone {
+  padding: 1.5rem;
+  border: 2px dashed #ccc;
+  border-radius: 8px;
+  text-align: center;
+  background: #fafafa;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.scribbby-url-upload .upload-zone:hover { border-color: #999; background: #f5f5f5; }
+.scribbby-url-upload .upload-zone.dragover { border-color: #06c; background: #e8f4ff; }
+.scribbby-url-upload .upload-zone input[type="file"] { display: none; }
+.scribbby-url-upload .upload-zone p { margin: 0; color: #555; font-size: 0.95rem; }
+
+/* Slot visibility: URL mode vs file mode */
+.scribbby-url-upload .slot-file .url-wrap { display: none; }
+.scribbby-url-upload .slot-file .upload-zone { display: block; }
+.scribbby-url-upload .slot-url .url-wrap { display: block; }
+.scribbby-url-upload .slot-url .upload-zone { display: none; }

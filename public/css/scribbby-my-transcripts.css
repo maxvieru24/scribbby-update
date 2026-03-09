@@ -1,0 +1,34 @@
+/* Scribbby My transcripts – fixed bottom-left panel, always visible when logged in */
+
+.scribbby-my-transcripts {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  z-index: 1000;
+  padding: 0.75rem 1rem;
+  max-width: 22rem;
+}
+
+.scribbby-my-transcripts-panel {
+  background: var(--color-bg, #fff);
+  border: 1px solid var(--color-border-input, #e0e0e0);
+  border-radius: 8px;
+  padding: 0.75rem 1rem;
+  box-shadow: 0 -2px 12px rgba(0, 0, 0, 0.08);
+}
+
+.scribbby-my-transcripts-title {
+  margin: 0 0 0.5rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.scribbby-my-transcripts-select {
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.9rem;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  background: #fff;
+  cursor: pointer;
+}

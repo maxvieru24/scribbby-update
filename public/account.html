@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Your Account – Scribbby</title>
+  <meta name="description" content="Manage your Scribbby account, billing, and preferences." />
+  <meta name="robots" content="noindex, nofollow" />
+  <link rel="canonical" href="https://scribbby.com/account" />
+  <link rel="stylesheet" href="css/tokens.css">
+  <link rel="stylesheet" href="fonts/fonts.css">
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      background: var(--color-bg);
+      max-width: 28rem;
+      margin: 2rem auto;
+      padding: 0 1rem;
+    }
+    h1 { font-size: 1.35rem; margin-bottom: 0.25rem; }
+    .back { font-size: 0.9rem; margin-bottom: 1.5rem; }
+    .back a { color: #06c; text-decoration: none; }
+    .back a:hover { text-decoration: underline; }
+    section {
+      margin-bottom: 2rem;
+      padding-bottom: 1.5rem;
+      border-bottom: 1px solid #eee;
+    }
+    section:last-of-type { border-bottom: none; }
+    .section-title { font-size: 1rem; font-weight: 600; margin-bottom: 0.75rem; color: #333; }
+    .info-row { font-size: 0.95rem; margin-bottom: 0.35rem; }
+    .info-row strong { display: inline-block; min-width: 6rem; color: #555; }
+    button {
+      padding: 0.5rem 1rem;
+      font-size: 1rem;
+      background: #111;
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    button:hover { background: #333; }
+    button:disabled { opacity: 0.6; cursor: not-allowed; }
+    button.danger { background: #b00; }
+    button.danger:hover { background: #c00; }
+    .message { font-size: 0.9rem; margin-top: 0.5rem; }
+    .message.success { color: #080; }
+    .message.error { color: #c00; }
+    .message.info { color: #06c; }
+  </style>
+</head>
+<body>
+  <p class="back"><a href="/">← Back to app</a></p>
+  <h1>Account</h1>
+  <p id="loading" class="message info">Loading…</p>
+
+  <section id="sectionSubscription" style="display: none;">
+    <div class="section-title">Subscription</div>
+    <div class="info-row"><strong>Plan</strong> <span id="plan">—</span></div>
+    <div class="info-row"><strong>Status</strong> <span id="subscriptionStatus">—</span></div>
+    <div class="info-row" id="periodRow" style="display: none;"><strong>Current period</strong> <span id="periodEnd">—</span></div>
+    <div class="info-row" id="cancelRow" style="display: none;"><strong>Cancels at period end</strong> <span id="cancelAtEnd">—</span></div>
+    <p style="margin-bottom: 0.5rem;"><a href="/upgrade">View plans & upgrade</a></p>
+    <button type="button" id="btnPortal">Manage subscription</button>
+    <p id="portalMessage" class="message" aria-live="polite"></p>
+  </section>
+
+  <section id="sectionAccount" style="display: none;">
+    <div class="section-title">Account info</div>
+    <div class="info-row"><strong>Email</strong> <span id="email">—</span></div>
+    <div class="info-row"><strong>Member since</strong> <span id="createdAt">—</span></div>
+  </section>
+
+  <section id="sectionPassword" style="display: none;">
+    <div class="section-title">Password</div>
+    <button type="button" id="btnResetPassword">Send password reset email</button>
+    <p id="passwordMessage" class="message" aria-live="polite"></p>
+  </section>
+
+  <section id="sectionDelete" style="display: none;">
+    <div class="section-title">Delete account</div>
+    <p style="font-size: 0.9rem; color: #555; margin-bottom: 0.75rem;">Permanently delete your account and all data. This cannot be undone.</p>
+    <button type="button" id="btnDelete" class="danger">Delete my account</button>
+    <p id="deleteMessage" class="message" aria-live="polite"></p>
+  </section>
+
+  <script type="module">
+    const loadingEl = document.getElementById('loading');
+    const sectionSubscription = document.getElementById('sectionSubscription');
+    const sectionAccount = document.getElementById('sectionAccount');
+    const sectionPassword = document.getElementById('sectionPassword');
+    const sectionDelete = document.getElementById('sectionDelete');
+
+    const planEl = document.getElementById('plan');
+    const subscriptionStatusEl = document.getElementById('subscriptionStatus');
+    const periodRow = document.getElementById('periodRow');
+    const periodEndEl = document.getElementById('periodEnd');
+    const cancelRow = document.getElementById('cancelRow');
+    const cancelAtEndEl = document.getElementById('cancelAtEnd');
+    const btnPortal = document.getElementById('btnPortal');
+    const portalMessage = document.getElementById('portalMessage');
+
+    const emailEl = document.getElementById('email');
+    const createdAtEl = document.getElementById('createdAt');
+
+    const btnResetPassword = document.getElementById('btnResetPassword');
+    const passwordMessage = document.getElementById('passwordMessage');
+
+    const btnDelete = document.getElementById('btnDelete');
+    const deleteMessage = document.getElementById('deleteMessage');
+
+    function showMessage(el, text, type = '') {
+      el.textContent = text || '';
+      el.className = 'message' + (type ? ' ' + type : '');
+      el.style.display = text ? 'block' : 'none';
+    }
+
+    const configRes = await fetch('/api/config');
+    const { supabaseUrl, supabaseAnonKey } = await configRes.json();
+    const { createClient } = await import('https://esm.sh/@supabase/supabase-js@2');
+    const supabase = createClient(supabaseUrl, supabaseAnonKey);
+
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) {
+      window.location.href = '/login?redirect=' + encodeURIComponent('/account');
+      throw new Error('Redirecting');
+    }
+
+    const user = session.user;
+    const userId = user.id;
+
+    const { data: profile, error: profileError } = await supabase
+      .from('profiles')
+      .select('plan, subscription_status, current_period_end, cancel_at_period_end, billing_interval')
+      .eq('id', userId)
+      .single();
+
+    loadingEl.style.display = 'none';
+
+    if (profileError) {
+      showMessage(portalMessage, 'Could not load profile.', 'error');
+    }
+
+    const plan = profile?.plan ?? 'free';
+    const status = profile?.subscription_status ?? 'inactive';
+    const periodEnd = profile?.current_period_end;
+    const cancelAtPeriodEnd = profile?.cancel_at_period_end === true;
+
+    planEl.textContent = plan === 'pro' ? 'Pro' : 'Free';
+    subscriptionStatusEl.textContent = status;
+    if (periodEnd) {
+      periodRow.style.display = '';
+      periodEndEl.textContent = new Date(periodEnd).toLocaleDateString(undefined, { dateStyle: 'medium' });
+    }
+    if (cancelAtPeriodEnd) {
+      cancelRow.style.display = '';
+      cancelAtEndEl.textContent = 'Yes';
+    }
+
+    emailEl.textContent = user.email || '—';
+    createdAtEl.textContent = user.created_at
+      ? new Date(user.created_at).toLocaleDateString(undefined, { dateStyle: 'medium' })
+      : '—';
+
+    sectionSubscription.style.display = 'block';
+    sectionAccount.style.display = 'block';
+    sectionPassword.style.display = 'block';
+    sectionDelete.style.display = 'block';
+
+    btnPortal.addEventListener('click', async () => {
+      showMessage(portalMessage, '');
+      btnPortal.disabled = true;
+      try {
+        const res = await fetch('/api/billing/portal', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + session.access_token },
+          body: JSON.stringify({}),
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          showMessage(portalMessage, data.error || 'Could not open billing', 'error');
+          return;
+        }
+        if (data.url) {
+          window.location.href = data.url;
+          return;
+        }
+        showMessage(portalMessage, 'No redirect URL received.', 'error');
+      } catch (e) {
+        showMessage(portalMessage, e.message || 'Request failed', 'error');
+      } finally {
+        btnPortal.disabled = false;
+      }
+    });
+
+    btnResetPassword.addEventListener('click', async () => {
+      const email = user.email;
+      if (!email) {
+        showMessage(passwordMessage, 'No email on account.', 'error');
+        return;
+      }
+      showMessage(passwordMessage, '');
+      btnResetPassword.disabled = true;
+      try {
+        const { error } = await supabase.auth.resetPasswordForEmail(email, {
+          redirectTo: new URL('/reset-password', window.location.origin).href,
+        });
+        if (error) throw error;
+        showMessage(passwordMessage, 'Check your email for the reset link.', 'success');
+      } catch (e) {
+        showMessage(passwordMessage, e.message || 'Failed to send reset email', 'error');
+      } finally {
+        btnResetPassword.disabled = false;
+      }
+    });
+
+    btnDelete.addEventListener('click', async () => {
+      const confirmed = window.confirm('Permanently delete your account and all data? This cannot be undone.');
+      if (!confirmed) return;
+      showMessage(deleteMessage, '');
+      btnDelete.disabled = true;
+      try {
+        const res = await fetch('/api/account/delete', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + session.access_token },
+          body: JSON.stringify({}),
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          showMessage(deleteMessage, data.error || 'Could not delete account', 'error');
+          btnDelete.disabled = false;
+          return;
+        }
+        await supabase.auth.signOut();
+        window.location.href = '/';
+      } catch (e) {
+        showMessage(deleteMessage, e.message || 'Request failed', 'error');
+        btnDelete.disabled = false;
+      }
+    });
+  </script>
+</body>
+</html>

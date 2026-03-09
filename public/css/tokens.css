@@ -1,0 +1,66 @@
+/* Scribbby design tokens – reusable colors & typography */
+:root {
+  /* Backgrounds */
+  --color-bg: #F8F8F7;
+  --color-bg-subtle: #F0F0EF;
+  --color-white: #FFFFFF;
+
+  /* Text / UI dark */
+  --color-dark: #142A45;
+  --color-dark-50: rgba(20, 42, 69, 0.5);
+
+  /* Borders */
+  --color-border: #E2E4E6;
+  --color-border-subtle: rgba(20, 42, 69, 0.05);
+  --color-border-input: rgba(24, 46, 82, 0.05);
+
+  /* Primary blue */
+  --color-primary: #0C7DFF;
+  --color-primary-10: rgba(12, 125, 255, 0.1);
+
+  /* Typography – font stacks */
+  --font-geist: 'Geist', system-ui, -apple-system, sans-serif;
+  --font-creato: 'Creato Display', 'Geist', system-ui, sans-serif;
+
+  /* Small Text – Geist 400, 14px, 140% */
+  --type-small-font-family: var(--font-geist);
+  --type-small-font-weight: 400;
+  --type-small-font-size: 14px;
+  --type-small-line-height: 140%;
+
+  /* Regular Text – Geist 400, 16px, 140% */
+  --type-regular-font-family: var(--font-geist);
+  --type-regular-font-weight: 400;
+  --type-regular-font-size: 16px;
+  --type-regular-line-height: 140%;
+
+  /* H1 – Creato 700, 62px, 90% */
+  --type-h1-font-family: var(--font-creato);
+  --type-h1-font-weight: 700;
+  --type-h1-font-size: 62px;
+  --type-h1-line-height: 90%;
+
+  /* H2 – Creato 700, 42px, 100% */
+  --type-h2-font-family: var(--font-creato);
+  --type-h2-font-weight: 700;
+  --type-h2-font-size: 42px;
+  --type-h2-line-height: 100%;
+
+  /* H3 – Creato 700, 32px, 120% */
+  --type-h3-font-family: var(--font-creato);
+  --type-h3-font-weight: 700;
+  --type-h3-font-size: 32px;
+  --type-h3-line-height: 120%;
+
+  /* H4 – Creato 700, 24px, 120% */
+  --type-h4-font-family: var(--font-creato);
+  --type-h4-font-weight: 700;
+  --type-h4-font-size: 24px;
+  --type-h4-line-height: 120%;
+
+  /* H5 – Creato 700, 20px, 130% */
+  --type-h5-font-family: var(--font-creato);
+  --type-h5-font-weight: 700;
+  --type-h5-font-size: 20px;
+  --type-h5-line-height: 130%;
+}

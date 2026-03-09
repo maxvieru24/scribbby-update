@@ -1,0 +1,739 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Transcribe Now – Scribbby App</title>
+  <meta name="description" content="You're in. Paste a link or drop a file and get your transcript in seconds." />
+  <meta name="robots" content="noindex, follow" />
+  <link rel="canonical" href="https://scribbby.com/app" />
+  <link rel="stylesheet" href="css/tokens.css">
+  <link rel="stylesheet" href="fonts/fonts.css">
+  <link rel="stylesheet" href="css/url-upload.css">
+  <link rel="stylesheet" href="css/scribbby-my-transcripts.css">
+  <script src="js/scribbby-url-upload.js"></script>
+  <script src="js/scribbby-my-transcripts.js"></script>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      background: var(--color-bg);
+      max-width: 32rem;
+      margin: 2rem auto;
+      padding: 0 1rem;
+    }
+    label { display: block; margin-bottom: 0.25rem; font-weight: 500; }
+    input[type="url"] {
+      width: 100%;
+      padding: 0.5rem 0.75rem;
+      font-size: 1rem;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      margin-bottom: 1rem;
+    }
+    button {
+      padding: 0.5rem 1rem;
+      font-size: 1rem;
+      background: #111;
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    button:hover { background: #333; }
+    button:disabled { opacity: 0.6; cursor: not-allowed; }
+    .timelog {
+      margin-top: 1.5rem;
+      padding: 0.75rem;
+      background: #f5f5f5;
+      border-radius: 6px;
+      font-size: 0.9rem;
+    }
+    .timelog.empty { color: #888; }
+    .error { color: #c00; margin-top: 0.5rem; }
+    .auth-bar {
+      font-size: 0.9rem;
+      color: #555;
+      margin-bottom: 1rem;
+      padding: 0.5rem 0;
+      border-bottom: 1px solid #eee;
+    }
+    .auth-bar a { color: #06c; text-decoration: none; }
+    .auth-bar a:hover { text-decoration: underline; }
+    .auth-bar .sep { margin: 0 0.35rem; color: #999; }
+    .transcript-box {
+      margin-top: 1.5rem;
+      padding: 1rem;
+      background: #f9f9f9;
+      border: 1px solid #e0e0e0;
+      border-radius: 8px;
+      font-size: 0.95rem;
+    }
+    .transcript-header { display: flex; flex-wrap: wrap; align-items: center; gap: 1rem; margin-bottom: 0.25rem; }
+    .copy-transcript-btn { margin-left: auto; padding: 0.35rem 0.75rem; font-size: 0.9rem; background: #333; color: #fff; border: none; border-radius: 4px; cursor: pointer; }
+    .copy-transcript-btn:hover { background: #555; }
+    .copy-transcript-btn.copied { background: #0a0; }
+    .timestamp-toggle { font-weight: normal; font-size: 0.9rem; color: #555; cursor: pointer; }
+    .timestamp-toggle input { margin-right: 0.35rem; }
+    .transcript-segment .ts { color: #666; font-size: 0.85em; margin-right: 0.25em; }
+    .transcript-text .transcript-p { margin: 0 0 1em; padding: 0; text-indent: 0; }
+    .transcript-text .transcript-p:last-child { margin-bottom: 0; }
+    .transcript-text {
+      margin-top: 0.5rem;
+      white-space: pre-wrap;
+      word-break: break-word;
+      max-height: 20rem;
+      overflow-y: auto;
+    }
+    .transcript-segment {
+      cursor: pointer;
+      border-radius: 2px;
+      padding: 0.1em 0;
+      margin: 0;
+    }
+    .transcript-segment:hover { background: #e8e8e8; }
+    .transcript-segment.current { background: #d0e3ff; }
+    .transcript-speaker {
+      font-weight: 600;
+      font-size: 0.85em;
+      margin-right: 0.35em;
+      user-select: none;
+    }
+    .transcript-speaker.speaker-0 { color: #0d47a1; }
+    .transcript-speaker.speaker-1 { color: #1b5e20; }
+    .transcript-speaker.speaker-2 { color: #4a148c; }
+    .transcript-speaker.speaker-3 { color: #bf360c; }
+    .transcript-audio-wrap {
+      margin-top: 1rem;
+      padding-top: 1rem;
+      border-top: 1px solid #e0e0e0;
+    }
+    .transcript-audio-wrap strong { display: block; margin-bottom: 0.5rem; }
+    .transcript-audio-wrap audio { width: 100%; max-width: 28rem; }
+    .app-state { display: block; }
+    .back-link { margin-top: 1rem; }
+    .back-link a { color: #06c; text-decoration: none; }
+    .back-link a:hover { text-decoration: underline; }
+    .progress-wrap {
+      margin-top: 1rem;
+      min-height: 2.5rem;
+      display: none;
+    }
+    .progress-wrap.visible {
+      display: block;
+    }
+    .progress-label { font-size: 0.9rem; color: #555; margin-bottom: 0.35rem; }
+    .progress-track {
+      height: 8px;
+      background: #e0e0e0;
+      border-radius: 4px;
+      overflow: hidden;
+    }
+    .progress-fill {
+      height: 100%;
+      width: 0%;
+      background: #06c;
+      border-radius: 4px;
+      transition: width 0.15s ease-out;
+    }
+    .progress-track.indeterminate .progress-fill {
+      width: 40%;
+      animation: progress-indeterminate 1.2s ease-in-out infinite;
+    }
+    @keyframes progress-indeterminate {
+      0% { transform: translateX(-100%); }
+      100% { transform: translateX(350%); }
+    }
+  </style>
+</head>
+<body>
+  <div id="authBar" class="auth-bar" aria-live="polite">Loading…</div>
+
+  <!-- State 1: Input (paste URL or upload file) -->
+  <div id="state1" class="app-state">
+    <h1>Ready to transcribe?</h1>
+    <scribbby-url-upload></scribbby-url-upload>
+    <div id="error" class="error" aria-live="polite"></div>
+    <div id="progressWrap" class="progress-wrap" aria-live="polite">
+      <div id="progressLabel" class="progress-label">Uploading…</div>
+      <div id="progressTrack" class="progress-track">
+        <div id="progressFill" class="progress-fill" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+      </div>
+    </div>
+    <div id="timelog" class="timelog empty" aria-live="polite">—</div>
+  </div>
+
+  <!-- State 2: Result (transcript + audio) -->
+  <div id="state2" class="app-state" style="display: none;">
+    <div id="transcriptBox" class="transcript-box">
+      <div class="transcript-header">
+        <strong>Transcript (Whisper V3 Large Turbo)</strong>
+        <label id="showTimestampsWrap" class="timestamp-toggle" style="display: none;"><input type="checkbox" id="showTimestamps" checked> Show timestamps</label>
+        <label id="showSpeakersWrap" class="timestamp-toggle" style="display: none;"><input type="checkbox" id="showSpeakers" checked> Show speakers</label>
+        <button type="button" id="btnCopyTranscript" class="copy-transcript-btn">Copy</button>
+      </div>
+      <div id="transcriptText" class="transcript-text"></div>
+      <div id="transcriptAudioWrap" class="transcript-audio-wrap" style="display: none;">
+        <strong>Audio</strong>
+        <audio id="transcriptAudio" controls preload="metadata"></audio>
+      </div>
+      <p class="back-link"><a href="#" id="transcribeAnotherLink">Transcribe another</a></p>
+    </div>
+    <div id="timelogResult" class="timelog empty" aria-live="polite">—</div>
+  </div>
+
+  <scribbby-my-transcripts></scribbby-my-transcripts>
+
+  <script>
+    const urlInput = document.getElementById('url');
+    const btnTranscribe = document.getElementById('btnTranscribe');
+    const errorEl = document.getElementById('error');
+    const timelogEl = document.getElementById('timelog');
+    const transcriptBox = document.getElementById('transcriptBox');
+    const transcriptText = document.getElementById('transcriptText');
+    const transcriptAudioWrap = document.getElementById('transcriptAudioWrap');
+    const transcriptAudio = document.getElementById('transcriptAudio');
+    const uploadZone = document.getElementById('uploadZone');
+    const fileInput = document.getElementById('fileInput');
+    const slot = document.getElementById('slot');
+    const progressWrap = document.getElementById('progressWrap');
+    const progressLabel = document.getElementById('progressLabel');
+    const progressTrack = document.getElementById('progressTrack');
+    const progressFill = document.getElementById('progressFill');
+    const state1 = document.getElementById('state1');
+    const state2 = document.getElementById('state2');
+    const timelogResult = document.getElementById('timelogResult');
+    const transcribeAnotherLink = document.getElementById('transcribeAnotherLink');
+
+    function showInputState() {
+      state2.style.display = 'none';
+      state1.style.display = 'block';
+      showError('');
+      timelogEl.textContent = '—';
+      timelogEl.classList.add('empty');
+    }
+
+    function showResultState(data, durationMs) {
+      transcriptAudio.removeEventListener('timeupdate', highlightSegment);
+      stopHighlightPolling();
+      if (data.segments && data.segments.length > 0) {
+        currentSegments = data.segments;
+        document.getElementById('showTimestampsWrap').style.display = '';
+        document.getElementById('showSpeakersWrap').style.display = '';
+        renderTranscriptSegments(currentSegments);
+      } else {
+        currentSegments = null;
+        document.getElementById('showTimestampsWrap').style.display = 'none';
+        document.getElementById('showSpeakersWrap').style.display = 'none';
+        transcriptText.innerHTML = '';
+        transcriptText.style.whiteSpace = 'pre-line';
+        transcriptText.textContent = splitIntoParagraphs(data.text || '') || '(empty)';
+      }
+      if (data.audioBase64 && data.audioContentType) {
+        transcriptAudio.src = `data:${data.audioContentType};base64,${data.audioBase64}`;
+        transcriptAudioWrap.style.display = 'block';
+      } else {
+        transcriptAudio.src = '';
+        transcriptAudioWrap.style.display = 'none';
+      }
+      if (durationMs != null) {
+        timelogResult.textContent = durationMs < 5000
+          ? `Transcribed in ${formatDuration(durationMs)}`
+          : `Transcribed in ${formatDuration(durationMs)} (aim: under 5 s)`;
+        timelogResult.classList.remove('empty');
+      } else {
+        timelogResult.textContent = '—';
+        timelogResult.classList.add('empty');
+      }
+      state1.style.display = 'none';
+      state2.style.display = 'block';
+      window.dispatchEvent(new Event('transcripts-updated'));
+    }
+
+    function showError(msg) {
+      errorEl.textContent = msg || '';
+      errorEl.style.display = msg ? 'block' : 'none';
+    }
+
+    function formatDuration(ms) {
+      if (ms >= 1000) return (ms / 1000).toFixed(1) + ' s';
+      return ms + ' ms';
+    }
+
+    function escapeHtml(s) {
+      const div = document.createElement('div');
+      div.textContent = s;
+      return div.innerHTML;
+    }
+
+    function seekToSegment(start) {
+      if (!transcriptAudio.src) return;
+      transcriptAudio.currentTime = start;
+      transcriptAudio.play();
+    }
+
+    function highlightSegment() {
+      const t = transcriptAudio.currentTime;
+      const segments = Array.from(transcriptText.querySelectorAll('.transcript-segment')).map((el) => ({
+        el,
+        start: Number(el.dataset.start),
+        end: Number(el.dataset.end),
+      }));
+      const inRange = segments.find((s) => t >= s.start && t < s.end);
+      const fallback = inRange ? null : segments.filter((s) => s.start <= t).pop() || segments[0];
+      const current = inRange || fallback;
+      segments.forEach((s) => s.el.classList.toggle('current', s === current));
+    }
+
+    function formatTimestamp(sec) {
+      const m = Math.floor(sec / 60);
+      const s = Math.floor(sec % 60);
+      return `${m}:${s.toString().padStart(2, '0')}`;
+    }
+
+    function getParagraphSizes(nSentences) {
+      if (nSentences <= 4) return [nSentences];
+      const sizes = [];
+      let rem = nSentences;
+      while (rem > 4) {
+        sizes.push(3);
+        rem -= 3;
+      }
+      if (rem === 1) sizes[sizes.length - 1] += 1;
+      else if (rem === 2) sizes.push(2);
+      else if (rem === 3) sizes.push(3);
+      else if (rem === 4) sizes.push(4);
+      return sizes;
+    }
+
+    function getParagraphBreakAfterSegmentIndices(segments) {
+      if (!segments || segments.length === 0) return new Set();
+      const sizes = getParagraphSizes(segments.length);
+      if (sizes.length <= 1) return new Set();
+      const breakAfter = [];
+      let cum = 0;
+      for (let i = 0; i < sizes.length - 1; i++) {
+        cum += sizes[i];
+        breakAfter.push(cum - 1);
+      }
+      return new Set(breakAfter);
+    }
+
+    function splitIntoParagraphs(text) {
+      if (!text || !text.trim()) return text;
+      const trimmed = text.trim();
+      const sentences = trimmed.split(/(?<=[.!?])\s+/).map((s) => s.trim()).filter(Boolean);
+      if (sentences.length === 0) return trimmed;
+      if (sentences.length <= 4) return sentences.join(' ');
+      const sizes = getParagraphSizes(sentences.length);
+      const paragraphs = [];
+      let i = 0;
+      for (const sz of sizes) {
+        paragraphs.push(sentences.slice(i, i + sz).join(' '));
+        i += sz;
+      }
+      return paragraphs.join('\n\n');
+    }
+
+    var currentSegments = null;
+    let highlightIntervalId = null;
+
+    function startHighlightPolling() {
+      stopHighlightPolling();
+      highlightIntervalId = setInterval(highlightSegment, 50);
+    }
+    function stopHighlightPolling() {
+      if (highlightIntervalId != null) {
+        clearInterval(highlightIntervalId);
+        highlightIntervalId = null;
+      }
+    }
+
+    function renderTranscriptSegments(segments, showTimestamps, showSpeakers) {
+      if (!segments || segments.length === 0) return;
+      if (showTimestamps === undefined) showTimestamps = document.getElementById('showTimestamps').checked;
+      if (showSpeakers === undefined) showSpeakers = document.getElementById('showSpeakers').checked;
+      stopHighlightPolling();
+      transcriptAudio.removeEventListener('timeupdate', highlightSegment);
+      transcriptText.style.whiteSpace = '';
+      const breakAfterSet = getParagraphBreakAfterSegmentIndices(segments);
+      const hasAnySpeaker = segments.some((s) => s.speaker !== undefined);
+      const breakBySpeaker = showSpeakers && hasAnySpeaker;
+      const parts = [];
+      segments.forEach((s, i) => {
+        const speakerChanged = i > 0 && segments[i - 1].speaker !== s.speaker;
+        const normalBreak = i > 0 && breakAfterSet.has(i - 1);
+        const startNewParagraph = breakBySpeaker ? speakerChanged : normalBreak;
+        if (startNewParagraph) parts.push('</p><p class="transcript-p">');
+        else if (i === 0) parts.push('<p class="transcript-p">');
+        else parts.push(' ');
+        const showSpeakerLabel = hasAnySpeaker && showSpeakers && s.speaker !== undefined && (i === 0 || segments[i - 1].speaker !== s.speaker);
+        if (showSpeakerLabel) parts.push(`<span class="transcript-speaker speaker-${s.speaker}">Speaker ${s.speaker + 1}:</span> `);
+        if (s.words && s.words.length > 0) {
+          const wordBlocks = s.words.map((w, wordIdx) => {
+            if (!(w.word || '').trim()) return '';
+            const showTsHere = showTimestamps && wordIdx === 0;
+            const ts = showTsHere ? `<span class="ts">[${formatTimestamp(w.start)}]</span> ` : '';
+            return `<span class="transcript-segment" data-start="${w.start}" data-end="${w.end}" role="button" tabindex="0">${ts}${escapeHtml(w.word)}</span>`;
+          }).filter(Boolean).join(' ');
+          parts.push(wordBlocks);
+        } else {
+          const ts = showTimestamps ? `<span class="ts">[${formatTimestamp(s.start)}]</span>` : '';
+          parts.push(`<span class="transcript-segment" data-start="${s.start}" data-end="${s.end}" role="button" tabindex="0">${ts}${escapeHtml(s.text)}</span>`);
+        }
+      });
+      parts.push('</p>');
+      transcriptText.innerHTML = parts.join('');
+      transcriptText.querySelectorAll('.transcript-segment').forEach((el) => {
+        el.addEventListener('click', () => seekToSegment(Number(el.dataset.start)));
+        el.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); seekToSegment(Number(el.dataset.start)); } });
+      });
+      transcriptAudio.addEventListener('timeupdate', highlightSegment);
+      startHighlightPolling();
+    }
+    window.renderTranscriptSegments = renderTranscriptSegments;
+
+    document.getElementById('showTimestamps').addEventListener('change', () => {
+      if (currentSegments && currentSegments.length > 0) {
+        renderTranscriptSegments(currentSegments, document.getElementById('showTimestamps').checked, document.getElementById('showSpeakers').checked);
+      }
+    });
+    document.getElementById('showSpeakers').addEventListener('change', () => {
+      if (currentSegments && currentSegments.length > 0) {
+        renderTranscriptSegments(currentSegments, document.getElementById('showTimestamps').checked, document.getElementById('showSpeakers').checked);
+      }
+    });
+
+    function getTranscriptCopyText() {
+      if (currentSegments && currentSegments.length > 0) {
+        const showTimestamps = document.getElementById('showTimestamps').checked;
+        const showSpeakers = document.getElementById('showSpeakers').checked;
+        const breakAfterSet = getParagraphBreakAfterSegmentIndices(currentSegments);
+        const hasAnySpeaker = currentSegments.some((s) => s.speaker !== undefined);
+        const breakBySpeaker = showSpeakers && hasAnySpeaker;
+        const lines = [];
+        let paragraph = [];
+        currentSegments.forEach((s, i) => {
+          const speakerChanged = i > 0 && currentSegments[i - 1].speaker !== s.speaker;
+          const normalBreak = i > 0 && breakAfterSet.has(i - 1);
+          const startNewParagraph = breakBySpeaker ? speakerChanged : normalBreak;
+          if (startNewParagraph && i > 0) {
+            lines.push(paragraph.join(' '));
+            paragraph = [];
+          }
+          const showSpeakerLabel = hasAnySpeaker && showSpeakers && s.speaker !== undefined && (i === 0 || currentSegments[i - 1].speaker !== s.speaker);
+          const parts = [];
+          if (showSpeakerLabel) parts.push(`Speaker ${s.speaker + 1}:`);
+          if (s.words && s.words.length > 0) {
+            s.words.forEach((w, wordIdx) => {
+              if (showTimestamps && wordIdx === 0) parts.push(`[${formatTimestamp(w.start)}]`);
+              if ((w.word || '').trim()) parts.push(w.word.trim());
+            });
+          } else {
+            if (showTimestamps) parts.push(`[${formatTimestamp(s.start)}]`);
+            if ((s.text || '').trim()) parts.push(s.text.trim());
+          }
+          paragraph.push(parts.filter(Boolean).join(' ').trim());
+        });
+        if (paragraph.length) lines.push(paragraph.filter(Boolean).join(' '));
+        return lines.filter(Boolean).join('\n\n').trim() || '';
+      }
+      return (transcriptText.innerText || '').trim();
+    }
+
+    document.getElementById('btnCopyTranscript').addEventListener('click', async () => {
+      const text = getTranscriptCopyText();
+      if (!text) return;
+      try {
+        await navigator.clipboard.writeText(text);
+        const btn = document.getElementById('btnCopyTranscript');
+        btn.textContent = 'Copied!';
+        btn.classList.add('copied');
+        setTimeout(() => { btn.textContent = 'Copy'; btn.classList.remove('copied'); }, 2000);
+      } catch (e) {
+        console.error('Copy failed:', e);
+      }
+    });
+
+    btnTranscribe.addEventListener('click', async () => {
+      const url = urlInput.value.trim();
+      if (!url) {
+        showError('Enter a URL first');
+        return;
+      }
+      showError('');
+      btnTranscribe.disabled = true;
+      timelogEl.classList.add('empty');
+      timelogEl.textContent = '—';
+      progressWrap.classList.add('visible');
+      setProcessingState('Transcribing…');
+      const start = Date.now();
+      try {
+        const configRes = await fetch('/api/config');
+        const { supabaseUrl, supabaseAnonKey } = await configRes.json();
+        let authHeader = {};
+        if (supabaseUrl && supabaseAnonKey) {
+          const { createClient } = await import('https://esm.sh/@supabase/supabase-js@2');
+          const supabase = createClient(supabaseUrl, supabaseAnonKey);
+          const { data: { session } } = await supabase.auth.getSession();
+          if (session?.access_token) {
+            authHeader = { 'Authorization': 'Bearer ' + session.access_token };
+          }
+        }
+        const res = await fetch('/transcribe', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', ...authHeader },
+          body: JSON.stringify({ url }),
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          throw new Error(data.error || res.statusText || 'Transcription failed');
+        }
+        const durationMs = Date.now() - start;
+        hideProgress();
+        showResultState(data, durationMs);
+      } catch (err) {
+        hideProgress();
+        timelogEl.textContent = '—';
+        timelogEl.classList.add('empty');
+        showError(err.message || 'Transcription failed');
+      } finally {
+        btnTranscribe.disabled = false;
+      }
+    });
+
+    function setUploadProgress(percent, label) {
+      progressFill.style.width = percent + '%';
+      progressFill.setAttribute('aria-valuenow', Math.round(percent));
+      progressLabel.textContent = label;
+      progressTrack.classList.toggle('indeterminate', false);
+    }
+
+    function setProcessingState(label) {
+      progressLabel.textContent = label || 'Processing…';
+      progressTrack.classList.add('indeterminate');
+      progressFill.style.width = '';
+    }
+
+    function hideProgress() {
+      progressWrap.classList.remove('visible');
+      progressTrack.classList.remove('indeterminate');
+      progressFill.style.width = '0%';
+      progressFill.setAttribute('aria-valuenow', 0);
+    }
+
+    async function runUploadTranscribe(file) {
+      if (!file) return;
+      showError('');
+      uploadZone.style.pointerEvents = 'none';
+      timelogEl.classList.add('empty');
+      timelogEl.textContent = '—';
+      progressWrap.classList.add('visible');
+      setUploadProgress(0, 'Uploading… 0%');
+
+      const start = Date.now();
+      try {
+        const configRes = await fetch('/api/config');
+        const { supabaseUrl, supabaseAnonKey } = await configRes.json();
+        let authHeader = {};
+        if (supabaseUrl && supabaseAnonKey) {
+          const { createClient } = await import('https://esm.sh/@supabase/supabase-js@2');
+          const supabase = createClient(supabaseUrl, supabaseAnonKey);
+          const { data: { session } } = await supabase.auth.getSession();
+          if (session?.access_token) {
+            authHeader = { 'Authorization': 'Bearer ' + session.access_token };
+          }
+        }
+        const formData = new FormData();
+        formData.append('file', file);
+
+        const data = await new Promise((resolve, reject) => {
+          const xhr = new XMLHttpRequest();
+          const url = '/transcribe/upload';
+
+          xhr.upload.addEventListener('progress', (e) => {
+            if (e.lengthComputable) {
+              const pct = Math.min(100, Math.round((e.loaded / e.total) * 100));
+              setUploadProgress(pct, 'Uploading… ' + pct + '%');
+            } else {
+              progressLabel.textContent = 'Uploading…';
+            }
+          });
+
+          xhr.upload.addEventListener('load', () => {
+            setProcessingState();
+          });
+
+          xhr.addEventListener('load', () => {
+            hideProgress();
+            let body;
+            try {
+              body = xhr.responseText ? JSON.parse(xhr.responseText) : {};
+            } catch (_) {
+              body = {};
+            }
+            if (xhr.status >= 200 && xhr.status < 300) {
+              resolve(body);
+            } else {
+              reject(new Error(body.error || xhr.statusText || 'Transcription failed'));
+            }
+          });
+
+          xhr.addEventListener('error', () => {
+            hideProgress();
+            reject(new Error('Network error'));
+          });
+
+          xhr.addEventListener('abort', () => {
+            hideProgress();
+            reject(new Error('Request aborted'));
+          });
+
+          xhr.open('POST', url);
+          if (authHeader.Authorization) {
+            xhr.setRequestHeader('Authorization', authHeader.Authorization);
+          }
+          xhr.send(formData);
+        });
+
+        const durationMs = Date.now() - start;
+        hideProgress();
+        showResultState(data, durationMs);
+      } catch (err) {
+        hideProgress();
+        timelogEl.textContent = '—';
+        timelogEl.classList.add('empty');
+        showError(err.message || 'Transcription failed');
+      } finally {
+        uploadZone.style.pointerEvents = '';
+        fileInput.value = '';
+      }
+    }
+
+    transcribeAnotherLink.addEventListener('click', (e) => {
+      e.preventDefault();
+      showInputState();
+    });
+
+    uploadZone.addEventListener('click', () => fileInput.click());
+    uploadZone.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); fileInput.click(); } });
+    fileInput.addEventListener('change', () => {
+      const file = fileInput.files?.[0];
+      if (file) runUploadTranscribe(file);
+    });
+    uploadZone.addEventListener('dragover', (e) => { e.preventDefault(); uploadZone.classList.add('dragover'); });
+    uploadZone.addEventListener('dragleave', () => uploadZone.classList.remove('dragover'));
+    uploadZone.addEventListener('drop', (e) => {
+      e.preventDefault();
+      uploadZone.classList.remove('dragover');
+      const file = e.dataTransfer?.files?.[0];
+      if (file) runUploadTranscribe(file);
+    });
+  </script>
+  <script type="module">
+    const authBar = document.getElementById('authBar');
+    const transcriptBox = document.getElementById('transcriptBox');
+    const transcriptText = document.getElementById('transcriptText');
+    const transcriptAudioWrap = document.getElementById('transcriptAudioWrap');
+
+    function escapeHtml(s) {
+      const div = document.createElement('div');
+      div.textContent = s;
+      return div.innerHTML;
+    }
+
+    function showJobTranscript(job) {
+      if (!job?.transcript_text?.trim()) return;
+      document.getElementById('state1').style.display = 'none';
+      document.getElementById('state2').style.display = 'block';
+      const transcriptAudioEl = document.getElementById('transcriptAudio');
+      const showTimestampsWrapEl = document.getElementById('showTimestampsWrap');
+      const showSpeakersWrapEl = document.getElementById('showSpeakersWrap');
+      const segments = job.segments?.length ? job.segments : null;
+      window.currentSegments = segments;
+      if (segments && typeof window.renderTranscriptSegments === 'function') {
+        showTimestampsWrapEl.style.display = '';
+        showSpeakersWrapEl.style.display = '';
+        window.renderTranscriptSegments(segments);
+      } else {
+        showTimestampsWrapEl.style.display = 'none';
+        showSpeakersWrapEl.style.display = 'none';
+        transcriptText.innerHTML = '';
+        transcriptText.style.whiteSpace = 'pre-line';
+        transcriptText.textContent = splitIntoParagraphs(job.transcript_text.trim());
+      }
+      if (job.audio_url) {
+        transcriptAudioEl.src = job.audio_url;
+        transcriptAudioWrap.style.display = 'block';
+      } else {
+        transcriptAudioEl.src = '';
+        transcriptAudioWrap.style.display = 'none';
+      }
+    }
+
+    document.querySelector('scribbby-my-transcripts')?.addEventListener('scribbby-transcript-selected', (e) => {
+      if (e.detail?.job) showJobTranscript(e.detail.job);
+    });
+
+    let usageCache = { used: null, limit: null };
+    let lastAccessToken = null;
+
+    function setUsageText(usageEl, used, limit) {
+      if (limit != null) usageEl.textContent = `Transcripts today: ${used}/${limit}`;
+      else usageEl.textContent = `Transcripts today: ${used}`;
+    }
+
+    function loadUsage(accessToken) {
+      if (!accessToken) return;
+      const usageEl = document.getElementById('usageIndicator');
+      if (!usageEl) return;
+      if (usageCache.used !== null) {
+        setUsageText(usageEl, usageCache.used, usageCache.limit);
+        return;
+      }
+      lastAccessToken = accessToken;
+      fetch('/api/transcribe/usage', { headers: { Authorization: 'Bearer ' + accessToken } })
+        .then((r) => r.json().catch(() => ({})))
+        .then((data) => {
+          const used = data.used ?? 0;
+          const limit = data.limit;
+          usageCache = { used, limit };
+          setUsageText(usageEl, used, limit);
+        })
+        .catch(() => {
+          usageEl.textContent = 'Transcripts today: unavailable';
+        });
+    }
+
+    function setAuthUI(session, supabase) {
+      const user = session?.user;
+      if (user?.email) {
+        authBar.innerHTML = 'Logged in as <strong>' + escapeHtml(user.email) + '</strong> <span class="sep">|</span> <span id="usageIndicator">Transcripts today: …</span> <span class="sep">|</span> <a href="/upgrade">Upgrade</a> <span class="sep">|</span> <a href="/account">Account</a> <span class="sep">|</span> <a href="#" id="logoutLink">Log out</a>';
+        loadUsage(session.access_token);
+        document.getElementById('logoutLink').addEventListener('click', async (e) => {
+          e.preventDefault();
+          const { createClient } = await import('https://esm.sh/@supabase/supabase-js@2');
+          const r = await fetch('/api/config');
+          const { supabaseUrl, supabaseAnonKey } = await r.json();
+          const supabase = createClient(supabaseUrl, supabaseAnonKey);
+          await supabase.auth.signOut();
+        });
+      } else {
+        usageCache = { used: null, limit: null };
+        lastAccessToken = null;
+        authBar.innerHTML = 'Not logged in <span class="sep">|</span> <a href="/signup">Sign up</a> <span class="sep">|</span> <a href="/login">Log in</a>';
+      }
+    }
+    const { createClient } = await import('https://esm.sh/@supabase/supabase-js@2');
+    const configRes = await fetch('/api/config');
+    const { supabaseUrl, supabaseAnonKey } = await configRes.json();
+    const supabase = createClient(supabaseUrl, supabaseAnonKey);
+    const { data: { session } } = await supabase.auth.getSession();
+    setAuthUI(session, supabase);
+    supabase.auth.onAuthStateChange((_event, session) => setAuthUI(session, supabase));
+    window.addEventListener('transcripts-updated', () => {
+      usageCache = { used: null, limit: null };
+      loadUsage(lastAccessToken);
+    });
+  </script>
+</body>
+</html>

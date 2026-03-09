@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sign Up Free – Scribbby</title>
+  <meta name="description" content="Create your free Scribbby account. 3 free transcriptions a day, no credit card required. Takes about 30 seconds." />
+  <meta name="robots" content="index, follow" />
+  <link rel="canonical" href="https://scribbby.com/sign-up" />
+  <meta property="og:title" content="Sign Up Free – Scribbby" />
+  <meta property="og:description" content="Create your free Scribbby account. 3 free transcriptions a day, no credit card required." />
+  <meta property="og:url" content="https://scribbby.com/sign-up" />
+  <link rel="stylesheet" href="css/tokens.css">
+  <link rel="stylesheet" href="fonts/fonts.css">
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      background: var(--color-bg);
+      max-width: 24rem;
+      margin: 2rem auto;
+      padding: 0 1rem;
+    }
+    h1 { font-size: 1.25rem; margin-bottom: 1.5rem; }
+    label { display: block; margin-bottom: 0.25rem; font-weight: 500; }
+    input[type="email"], input[type="password"] {
+      width: 100%;
+      padding: 0.5rem 0.75rem;
+      font-size: 1rem;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      margin-bottom: 1rem;
+    }
+    button {
+      width: 100%;
+      padding: 0.5rem 1rem;
+      font-size: 1rem;
+      background: #111;
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    button:hover { background: #333; }
+    button:disabled { opacity: 0.6; cursor: not-allowed; }
+    .error { color: #c00; font-size: 0.9rem; margin-top: 0.5rem; }
+    .success { color: #080; font-size: 0.9rem; margin-top: 0.5rem; }
+    .link { margin-top: 1rem; font-size: 0.9rem; }
+    .link a { color: #06c; }
+  </style>
+</head>
+<body>
+  <h1>Sign up</h1>
+  <form id="form">
+    <label for="email">Email</label>
+    <input type="email" id="email" name="email" required autocomplete="email">
+    <label for="password">Password</label>
+    <input type="password" id="password" name="password" required autocomplete="new-password" minlength="6">
+    <button type="submit" id="btn">Sign up</button>
+  </form>
+  <div id="message" class="error" aria-live="polite"></div>
+  <p class="link">Already have an account? <a href="/login">Log in</a></p>
+  <p class="link"><a href="/">Back to download</a></p>
+
+  <script type="module">
+    const form = document.getElementById('form');
+    const btn = document.getElementById('btn');
+    const messageEl = document.getElementById('message');
+
+    function showMessage(msg, isError = true) {
+      messageEl.textContent = msg || '';
+      messageEl.className = isError ? 'error' : 'success';
+      messageEl.style.display = msg ? 'block' : 'none';
+    }
+
+    const { createClient } = await import('https://esm.sh/@supabase/supabase-js@2');
+    const configRes = await fetch('/api/config');
+    const { supabaseUrl, supabaseAnonKey } = await configRes.json();
+    const supabase = createClient(supabaseUrl, supabaseAnonKey);
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const email = form.email.value.trim();
+      const password = form.password.value;
+      if (!email || !password) return;
+      showMessage('');
+      btn.disabled = true;
+      try {
+        const { data, error } = await supabase.auth.signUp({ email, password });
+        if (error) throw error;
+        if (data?.user && !data.user.identities?.length) {
+          showMessage('An account with this email already exists. Try logging in.', true);
+        } else {
+          window.location.href = '/';
+        }
+      } catch (err) {
+        showMessage(err.message || 'Sign up failed', true);
+      } finally {
+        btn.disabled = false;
+      }
+    });
+  </script>
+</body>
+</html>
