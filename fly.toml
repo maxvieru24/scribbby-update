@@ -1,4 +1,4 @@
-# fly.toml app configuration file generated for scribbby-update on 2026-03-09T11:59:15Z
+# fly.toml app configuration file generated for scribbby-update on 2026-06-12T18:11:36Z
 #
 # See https://fly.io/docs/reference/configuration/ for information about how to use this file.
 #
@@ -11,13 +11,20 @@ primary_region = 'cdg'
 [http_service]
   internal_port = 8080
   force_https = true
-  auto_stop_machines = 'stop'
-  auto_start_machines = true
+  auto_stop_machines = false
+  auto_start_machines = false
   min_machines_running = 0
   processes = ['app']
 
 [[vm]]
-  memory = '1gb'
+  cpu_kind = 'performance'
+  cpus = 1
+  memory_mb = 2048
+
+[[vm]]
+  memory = '768mb'
   cpu_kind = 'shared'
   cpus = 1
-  memory_mb = 256
+  memory_mb = 768
+  processes = ['app']
+  size = 'shared-cpu-1x'
